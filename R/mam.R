@@ -223,7 +223,12 @@ mam <- function(smooth,re,fe,dat,margdat=dat,preddat=dat,control=mam_control(),.
 
     }else{
     condvar <- condvarmat <- NULL
-  }
+    }
+
+  # Joint precision from the conditional model, ordered to match the order of the params in the marginal TMB template
+  sdr <- TMB::sdreport(template,getJointPrecision = TRUE)
+  H <- sdr$jointPrecision
+
 
   dt <- difftime(Sys.time(),tm,units = 'secs')
   if (verbose) cat("finished, took",round(dt,4),"seconds.\n")
@@ -263,7 +268,9 @@ mam <- function(smooth,re,fe,dat,margdat=dat,preddat=dat,control=mam_control(),.
   reformmarg <- lme4::lFormula(re,data=margdat)
   Zmarg <- Matrix::t(reformmarg$reTrms$Zt)
   # TODO: unequal group sizes
-  Zflat <- flatten_bdmat(Zmarg,unique(table(reformmarg$reTrms$flist$id)),redim)
+  # Zflat <- flatten_bdmat(Zmarg,unique(table(reformmarg$reTrms$flist$id)),redim) # EQUAL GROUP SIZES
+  Zflat <- flatten_bdmat(Zmarg,table(reformmarg$reTrms$flist$id),redim)
+
 
   # Get a single subject's RE lambda and Lind and diagind
   LamforGHQ <- tmbdat$Lam[1:redim,1:redim]
@@ -341,9 +348,6 @@ mam <- function(smooth,re,fe,dat,margdat=dat,preddat=dat,control=mam_control(),.
   if (verbose) cat("finished, took",round(dt,4),"seconds.\n")
   tm <- Sys.time()
   if (verbose) cat("Computing variance factor... ")
-  # Joint precision from the conditional model, ordered to match the order of the params in the marginal TMB template
-  sdr <- TMB::sdreport(template,getJointPrecision = TRUE)
-  H <- sdr$jointPrecision
   # Compute the variance one of three ways
   if (varmethod == 0) {
     # 0 == "auto", so choose based on whether any dd < 0

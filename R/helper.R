@@ -39,8 +39,13 @@ flatten_bdmat <- function(Z,n,d) {
   # d: block column dimension
   p <- ncol(Z)/d
   ZT <- methods::as(Z,'TsparseMatrix')
-  ZT@j <- as.integer(rep(rep(0:(d-1),each=n),times=p))
-  as.matrix(ZT[ ,1:d])
+  jvec <- list()
+  # previous: as.integer(rep(rep(0:(d-1),each=n),times=p))
+  # ZT@j <- as.integer(rep(rep(0:(d-1),each=n),times=p))
+  for (i in 1:length(n))
+    jvec[[i]] <- rep(0:(d-1),each=n[i])
+  ZT@j <- as.integer(Reduce(c,jvec))
+  as.matrix(ZT[ ,1:d,drop=FALSE])
 }
 
 #' @name logit
